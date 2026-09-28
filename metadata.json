@@ -1,0 +1,6 @@
+{
+  "name": "SignalVision — Adaptive Traffic Signal Control",
+  "description": "AI-powered adaptive traffic signal control command center by Team KYZEN for Smart India Hackathon 2026. Real-time YOLOv8 vehicle detection and dynamic green-time optimization for city traffic authorities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
