@@ -939,3 +939,79 @@ export const HOURLY_WAIT_TIME_DATA = [
   { hour: '22:00', fixed: 56, adaptive: 32, saved: 24 },
   { hour: '23:00', fixed: 44, adaptive: 22, saved: 22 },
 ];
+
+// "Today" — partial live window (06:00–20:00) with fewer data points, as if
+// captured through the current day so far instead of a full 24-hour cycle.
+const WAIT_TIME_TODAY = [
+  { hour: '06:00', fixed: 46, adaptive: 22, saved: 24 },
+  { hour: '07:00', fixed: 68, adaptive: 38, saved: 30 },
+  { hour: '08:00', fixed: 98, adaptive: 64, saved: 34 },
+  { hour: '09:00', fixed: 110, adaptive: 72, saved: 38 },
+  { hour: '10:00', fixed: 78, adaptive: 50, saved: 28 },
+  { hour: '11:00', fixed: 64, adaptive: 40, saved: 24 },
+  { hour: '12:00', fixed: 60, adaptive: 38, saved: 22 },
+  { hour: '13:00', fixed: 62, adaptive: 39, saved: 23 },
+  { hour: '14:00', fixed: 66, adaptive: 42, saved: 24 },
+  { hour: '15:00', fixed: 72, adaptive: 44, saved: 28 },
+  { hour: '16:00', fixed: 84, adaptive: 54, saved: 30 },
+  { hour: '17:00', fixed: 104, adaptive: 68, saved: 36 },
+  { hour: '18:00', fixed: 122, adaptive: 80, saved: 42 },
+  { hour: '19:00', fixed: 96, adaptive: 62, saved: 34 },
+  { hour: '20:00', fixed: 68, adaptive: 44, saved: 24 },
+];
+
+// "7 Days" — average across the last 7 days (recent, slightly busier week).
+const WAIT_TIME_7D = [
+  { hour: '00:00', fixed: 40, adaptive: 20, saved: 20 },
+  { hour: '02:00', fixed: 34, adaptive: 15, saved: 19 },
+  { hour: '04:00', fixed: 36, adaptive: 16, saved: 20 },
+  { hour: '06:00', fixed: 52, adaptive: 26, saved: 26 },
+  { hour: '07:00', fixed: 70, adaptive: 42, saved: 28 },
+  { hour: '08:00', fixed: 102, adaptive: 68, saved: 34 },
+  { hour: '09:00', fixed: 118, adaptive: 78, saved: 40 },
+  { hour: '10:00', fixed: 112, adaptive: 72, saved: 40 },
+  { hour: '11:00', fixed: 88, adaptive: 56, saved: 32 },
+  { hour: '12:00', fixed: 76, adaptive: 48, saved: 28 },
+  { hour: '13:00', fixed: 72, adaptive: 44, saved: 28 },
+  { hour: '14:00', fixed: 74, adaptive: 46, saved: 28 },
+  { hour: '15:00', fixed: 82, adaptive: 50, saved: 32 },
+  { hour: '16:00', fixed: 92, adaptive: 58, saved: 34 },
+  { hour: '17:00', fixed: 122, adaptive: 78, saved: 44 },
+  { hour: '18:00', fixed: 132, adaptive: 86, saved: 46 },
+  { hour: '19:00', fixed: 126, adaptive: 82, saved: 44 },
+  { hour: '20:00', fixed: 102, adaptive: 64, saved: 38 },
+  { hour: '21:00', fixed: 78, adaptive: 48, saved: 30 },
+  { hour: '22:00', fixed: 58, adaptive: 34, saved: 24 },
+  { hour: '23:00', fixed: 46, adaptive: 24, saved: 22 },
+];
+
+// "30 Days" — smoothed 24-hour network-wide average across the last month.
+const WAIT_TIME_30D = [
+  { hour: '00:00', fixed: 36, adaptive: 17, saved: 19 },
+  { hour: '02:00', fixed: 30, adaptive: 13, saved: 17 },
+  { hour: '04:00', fixed: 33, adaptive: 14, saved: 19 },
+  { hour: '06:00', fixed: 48, adaptive: 24, saved: 24 },
+  { hour: '07:00', fixed: 64, adaptive: 39, saved: 25 },
+  { hour: '08:00', fixed: 96, adaptive: 63, saved: 33 },
+  { hour: '09:00', fixed: 112, adaptive: 74, saved: 38 },
+  { hour: '10:00', fixed: 106, adaptive: 70, saved: 36 },
+  { hour: '11:00', fixed: 84, adaptive: 53, saved: 31 },
+  { hour: '12:00', fixed: 72, adaptive: 46, saved: 26 },
+  { hour: '13:00', fixed: 68, adaptive: 42, saved: 26 },
+  { hour: '14:00', fixed: 70, adaptive: 44, saved: 26 },
+  { hour: '15:00', fixed: 76, adaptive: 48, saved: 28 },
+  { hour: '16:00', fixed: 86, adaptive: 56, saved: 30 },
+  { hour: '17:00', fixed: 114, adaptive: 74, saved: 40 },
+  { hour: '18:00', fixed: 126, adaptive: 82, saved: 44 },
+  { hour: '19:00', fixed: 120, adaptive: 79, saved: 41 },
+  { hour: '20:00', fixed: 96, adaptive: 62, saved: 34 },
+  { hour: '21:00', fixed: 72, adaptive: 46, saved: 26 },
+  { hour: '22:00', fixed: 54, adaptive: 32, saved: 22 },
+  { hour: '23:00', fixed: 42, adaptive: 22, saved: 20 },
+];
+
+export const WAIT_TIME_DATA_BY_RANGE = {
+  today: WAIT_TIME_TODAY,
+  '7d': WAIT_TIME_7D,
+  '30d': WAIT_TIME_30D,
+};

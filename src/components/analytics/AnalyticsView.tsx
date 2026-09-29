@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Junction } from '../../types/traffic';
-import { HOURLY_WAIT_TIME_DATA } from '../../data/mockTrafficData';
+import { WAIT_TIME_DATA_BY_RANGE } from '../../data/mockTrafficData';
 import {
   TrendingDown,
   Clock,
@@ -23,11 +23,14 @@ interface AnalyticsViewProps {
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavigateToLive }) => {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('today');
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
+  const [pinnedHour, setPinnedHour] = useState<number | null>(null);
   const [tableSearch, setTableSearch] = useState<string>('');
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
 
-  const avgWaitFixed = 74;
-  const avgWaitAdaptive = 46;
+  const rangeData = WAIT_TIME_DATA_BY_RANGE[timeRange];
+  const activeHour = pinnedHour ?? hoveredHour;
+  const avgWaitFixed = Math.round(rangeData.reduce((sum, d) => sum + d.fixed, 0) / rangeData.length);
+  const avgWaitAdaptive = Math.round(rangeData.reduce((sum, d) => sum + d.adaptive, 0) / rangeData.length);
   const avgReduction = Math.round(((avgWaitFixed - avgWaitAdaptive) / avgWaitFixed) * 100);
 
   // Filtered comparison table data
@@ -113,7 +116,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
         <div className="flex items-center gap-2 mb-3">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" />
           <span className="text-[11px] sm:text-xs font-mono text-cyan-400 font-bold uppercase tracking-wider">
-            Smart India Hackathon 2026 · Target Impact Assessment
+             Target Impact Assessment
           </span>
         </div>
 
@@ -169,7 +172,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div className="min-w-0">
               <h3 className="text-sm font-semibold text-white">
-                24-Hour Diurnal Waiting Time Curve
+                Network-Wide Average Wait by Hour
               </h3>
               <p className="text-xs text-slate-400">
                 Fixed Timer Baseline (Red/Gray) vs. Adaptive AI Engine (Cyan) across hourly rush periods
@@ -179,11 +182,11 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
             <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-xs font-mono">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-0.5 bg-slate-500" />
-                <span className="text-slate-400">Fixed Baseline (~74s avg)</span>
+                <span className="text-slate-400">Fixed Baseline (~{avgWaitFixed}s avg)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-1 bg-cyan-400 rounded" />
-                <span className="text-cyan-300 font-semibold">SignalVision AI (~46s avg)</span>
+                <span className="text-cyan-300 font-semibold">SignalVision AI (~{avgWaitAdaptive}s avg)</span>
               </div>
             </div>
           </div>
@@ -211,8 +214,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
               <polygon
                 points={`
                   0,200
-                  ${HOURLY_WAIT_TIME_DATA.map((d, i) => {
-                    const x = (i / (HOURLY_WAIT_TIME_DATA.length - 1)) * 1000;
+                  ${rangeData.map((d, i) => {
+                    const x = (i / (rangeData.length - 1)) * 1000;
                     const y = 200 - (d.adaptive / 140) * 190;
                     return `${x},${y}`;
                   }).join(' ')}
@@ -227,8 +230,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
                 stroke="#64748b"
                 strokeWidth="2.5"
                 strokeDasharray="4 3"
-                points={HOURLY_WAIT_TIME_DATA.map((d, i) => {
-                  const x = (i / (HOURLY_WAIT_TIME_DATA.length - 1)) * 1000;
+                points={rangeData.map((d, i) => {
+                  const x = (i / (rangeData.length - 1)) * 1000;
                   const y = 200 - (d.fixed / 140) * 190;
                   return `${x},${y}`;
                 }).join(' ')}
@@ -239,16 +242,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
                 fill="none"
                 stroke="#22d3ee"
                 strokeWidth="3.5"
-                points={HOURLY_WAIT_TIME_DATA.map((d, i) => {
-                  const x = (i / (HOURLY_WAIT_TIME_DATA.length - 1)) * 1000;
+                points={rangeData.map((d, i) => {
+                  const x = (i / (rangeData.length - 1)) * 1000;
                   const y = 200 - (d.adaptive / 140) * 190;
                   return `${x},${y}`;
                 }).join(' ')}
               />
 
               {/* Data points */}
-              {HOURLY_WAIT_TIME_DATA.map((d, i) => {
-                const x = (i / (HOURLY_WAIT_TIME_DATA.length - 1)) * 1000;
+              {rangeData.map((d, i) => {
+                const x = (i / (rangeData.length - 1)) * 1000;
                 const y = 200 - (d.adaptive / 140) * 190;
                 const isHovered = hoveredHour === i;
                 return (
@@ -263,24 +266,25 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
                     className="transition-all duration-150 cursor-pointer"
                     onMouseEnter={() => setHoveredHour(i)}
                     onMouseLeave={() => setHoveredHour(null)}
+                    onClick={() => setPinnedHour((p) => (p === i ? null : i))}
                   />
                 );
               })}
             </svg>
 
-            {/* Hover Tooltip Box */}
-            {hoveredHour !== null && (
+            {/* Hover/Pinned Tooltip Box */}
+            {activeHour !== null && (
               <div
                 className="absolute -top-1 bg-slate-950 border border-cyan-500 rounded p-2 text-xs font-mono shadow-xl pointer-events-none transform -translate-x-1/2 z-20"
                 style={{
-                  left: `${(hoveredHour / (HOURLY_WAIT_TIME_DATA.length - 1)) * 100}%`,
+                  left: `${Math.min(Math.max((activeHour / (rangeData.length - 1)) * 100, 9), 91)}%`,
                 }}
               >
-                <div className="font-bold text-white mb-0.5">{HOURLY_WAIT_TIME_DATA[hoveredHour].hour}</div>
-                <div className="text-cyan-400">Adaptive: {HOURLY_WAIT_TIME_DATA[hoveredHour].adaptive}s wait</div>
-                <div className="text-slate-400">Fixed: {HOURLY_WAIT_TIME_DATA[hoveredHour].fixed}s wait</div>
+                <div className="font-bold text-white mb-0.5">{rangeData[activeHour].hour}</div>
+                <div className="text-cyan-400">Adaptive: {rangeData[activeHour].adaptive}s wait</div>
+                <div className="text-slate-400">Fixed: {rangeData[activeHour].fixed}s wait</div>
                 <div className="text-emerald-400 font-bold">
-                  Saved: {HOURLY_WAIT_TIME_DATA[hoveredHour].saved}s / cycle
+                  Saved: {rangeData[activeHour].saved}s / cycle
                 </div>
               </div>
             )}
@@ -288,7 +292,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
 
           {/* X-axis Hour Labels */}
           <div className="flex justify-between text-[10px] font-mono text-slate-400 pt-3 border-t border-slate-800">
-            {HOURLY_WAIT_TIME_DATA.filter((_, idx) => idx % 3 === 0).map((d) => (
+            {rangeData.filter((_, idx) => idx % 3 === 0).map((d) => (
               <span key={d.hour}>{d.hour}</span>
             ))}
           </div>
@@ -368,7 +372,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
                 <th className="py-2.5 px-4 font-semibold font-sans">Junction Name</th>
                 <th className="py-2.5 px-4 font-semibold font-sans">Zone</th>
                 <th className="py-2.5 px-4 font-semibold text-right">Fixed Baseline</th>
-                <th className="py-2.5 px-4 font-semibold text-right">Adaptive AI Wait</th>
+                <th className="py-2.5 px-4 font-semibold text-right">Adaptive Wait</th>
                 <th className="py-2.5 px-4 font-semibold text-right">Reduction</th>
                 <th className="py-2.5 px-4 font-semibold text-right">Hourly Throughput</th>
                 <th className="py-2.5 px-4 font-semibold text-center font-sans">Action</th>

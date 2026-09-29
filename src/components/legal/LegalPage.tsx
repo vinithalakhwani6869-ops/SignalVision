@@ -11,7 +11,7 @@ interface LegalPageProps {
 const privacySections = [
   {
     title: 'What this prototype collects',
-    body: 'SignalVision is a Smart India Hackathon 2026 prototype ("SignalVisionIt"). It does not collect, store, or transmit any personal data from the public. CCTV imagery shown in this dashboard is simulated using static stock frames; no live video or identifiable imagery of real persons or vehicles is processed.',
+    body: 'SignalVision is a Smart India Hackathon 2026 prototype. It does not collect, store, or transmit any personal data from the public. CCTV imagery shown in this dashboard is simulated using static stock frames; no live video or identifiable imagery of real persons or vehicles is processed.',
   },
   {
     title: 'Vehicle detection & location data',
@@ -34,11 +34,11 @@ const privacySections = [
 const termsSections = [
   {
     title: 'Purpose',
-    body: 'These Terms apply to your use of the SignalVisionIt adaptive traffic signal control command-center prototype, built by Team KYZEN for Smart India Hackathon 2026.',
+    body: 'These Terms apply to your use of the SignalVision adaptive traffic signal control command-center prototype, built by Team KYZEN for Smart India Hackathon 2026.',
   },
   {
     title: 'Prototype status',
-    body: 'SignalVisionIt is a demonstration prototype. The simulated traffic data, timers, and analytics are illustrative and do not represent real traffic conditions or a deployable signal-controller system.',
+    body: 'SignalVision is a demonstration prototype. The simulated traffic data, timers, and analytics are illustrative and do not represent real traffic conditions or a deployable signal-controller system.',
   },
   {
     title: 'Prohibited use',

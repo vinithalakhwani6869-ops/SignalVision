@@ -149,6 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Fail-Safe Toggle */}
             <button
               onClick={onToggleFailSafe}
+              title="Operator override: switch all controllers between adaptive AI and fixed 45s timers. This manual interlock is the only thing that changes the engine status."
               className={`w-full flex items-center justify-between px-3 py-2 rounded border text-xs font-medium transition-all ${
                 globalFailSafe
                   ? 'bg-amber-950/80 border-amber-500 text-amber-200'
@@ -170,7 +171,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-3 border-t border-slate-800 bg-slate-950/40 text-[11px] text-slate-400 space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">Controller Engine</span>
-            <span className="font-mono text-slate-200 flex items-center gap-1.5">
+            <span
+              className="font-mono text-slate-200 flex items-center gap-1.5 cursor-help"
+              title={
+                globalFailSafe
+                  ? 'Fixed 45s timers active — engaged by operator override (manual fail-safe toggle below or Settings › Safety & Watchdog).'
+                  : 'YOLOv8 detection + adaptive phase allocation active on all controllers.'
+              }
+            >
               <span className={`w-1.5 h-1.5 rounded-full ${globalFailSafe ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`} />
               {globalFailSafe ? 'Fixed 45s Fallback' : 'YOLOv8 Adaptive'}
             </span>

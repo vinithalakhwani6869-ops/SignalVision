@@ -80,9 +80,14 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2 text-slate-400">
           <span>Engine:</span>
           <span
-            className={`font-mono font-medium ${
+            className={`font-mono font-medium cursor-help ${
               globalFailSafe ? 'text-amber-400' : 'text-emerald-400'
             }`}
+            title={
+              globalFailSafe
+                ? 'Fail-safe engaged by OPERATOR OVERRIDE (Sidebar › Fail-Safe Mode / Settings › Safety & Watchdog). All local controllers running fixed 45s timers; YOLOv8 adaptive allocation suspended. No automatic condition triggers this state.'
+                : 'Adaptive density control active — no fail-safe engaged. Fallback to fixed timers only occurs via the manual operator override.'
+            }
           >
             {globalFailSafe ? 'FIXED FALLBACK' : 'ADAPTIVE DENSITY'}
           </span>
