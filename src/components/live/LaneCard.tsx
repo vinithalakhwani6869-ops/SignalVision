@@ -56,9 +56,9 @@ export const LaneCard: React.FC<LaneCardProps> = ({
             </h3>
           </div>
           <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
-            <span>Queue: <strong className="text-slate-200 font-mono">{lane.queueLengthMeters}m</strong></span>
+            <span>Queue: <strong className="text-slate-200 font-mono">{Math.round(lane.queueLengthMeters)}m</strong></span>
             <span>·</span>
-            <span>Speed: <strong className="text-slate-200 font-mono">{lane.avgSpeedKmph} km/h</strong></span>
+            <span>Speed: <strong className="text-slate-200 font-mono">{Math.round(lane.avgSpeedKmph)} km/h</strong></span>
           </div>
         </div>
 
@@ -67,9 +67,9 @@ export const LaneCard: React.FC<LaneCardProps> = ({
       </div>
 
       {/* Middle Section: Vehicle Count & Live Countdown Ring */}
-      <div className="my-3 flex items-center justify-between gap-3">
+      <div className="my-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         {/* Left: Vehicle Count with Density Status */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1 basis-40">
           <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400">
             Detected Queue
           </div>

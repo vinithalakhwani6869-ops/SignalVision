@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Junction, BoundingBox } from '../../types/traffic';
+import { Junction, BoundingBox, EmergencyType } from '../../types/traffic';
 import { generateBoundingBoxes } from '../../hooks/useTrafficSimulation';
+import { VehicleSprite, VehicleOrientation } from './VehicleSprite';
 import {
   Camera,
   Maximize2,
@@ -11,16 +12,17 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  PersonStanding,
 } from 'lucide-react';
 
 interface CctvVideoPlayerProps {
   junction: Junction;
-  emergencyActive: boolean;
+  emergencyTypes: EmergencyType[];
 }
 
 export const CctvVideoPlayer: React.FC<CctvVideoPlayerProps> = ({
   junction,
-  emergencyActive,
+  emergencyTypes,
 }) => {
   const [showBoxes, setShowBoxes] = useState<boolean>(true);
   const [showConfidence, setShowConfidence] = useState<boolean>(true);
@@ -30,7 +32,7 @@ export const CctvVideoPlayer: React.FC<CctvVideoPlayerProps> = ({
   const [timecode, setTimecode] = useState<string>('');
 
   // Generate bounding boxes according to current junction lanes
-  const boxes = generateBoundingBoxes(junction, emergencyActive);
+  const boxes = generateBoundingBoxes(junction, emergencyTypes);
 
   // Live milliseconds timecode & small FPS jitter for authentic CCTV feel
   useEffect(() => {
@@ -52,6 +54,15 @@ export const CctvVideoPlayer: React.FC<CctvVideoPlayerProps> = ({
     'East Approach',
     'West Approach',
   ] as const;
+
+  // Heading each detected vehicle faces, by approach lane, matching the
+  // static CCTV frame geometry.
+  const laneOrientation: Record<'A' | 'B' | 'C' | 'D', VehicleOrientation> = {
+    A: 'DOWN',
+    B: 'LEFT',
+    C: 'UP',
+    D: 'RIGHT',
+  };
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex flex-col h-full">
@@ -195,17 +206,25 @@ export const CctvVideoPlayer: React.FC<CctvVideoPlayerProps> = ({
         {showBoxes && (
           <div className="absolute inset-0 pointer-events-none">
             {boxes.map((box) => {
-              const isAmbulance = box.isEmergency;
+              const isEmergencyVehicle = box.isEmergency;
               const isHeavy = box.label === 'bus' || box.label === 'truck';
 
-              const boxBorder = isAmbulance
-                ? 'border-2 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)] animate-pulse'
+              const boxBorder = isEmergencyVehicle
+                ? box.emergencyType === 'FIRE'
+                  ? 'border-2 border-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.9)] animate-pulse'
+                  : box.emergencyType === 'OTHER'
+                  ? 'border-2 border-sky-500 shadow-[0_0_12px_rgba(14,165,233,0.9)] animate-pulse'
+                  : 'border-2 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.9)] animate-pulse'
                 : isHeavy
                 ? 'border border-amber-400 bg-amber-500/10'
                 : 'border border-cyan-400 bg-cyan-500/10';
 
-              const tagBg = isAmbulance
-                ? 'bg-rose-600 text-white font-bold'
+              const tagBg = isEmergencyVehicle
+                ? box.emergencyType === 'FIRE'
+                  ? 'bg-orange-500 text-slate-950 font-bold'
+                  : box.emergencyType === 'OTHER'
+                  ? 'bg-sky-500 text-slate-950 font-bold'
+                  : 'bg-rose-600 text-white font-bold'
                 : isHeavy
                 ? 'bg-amber-500 text-slate-950 font-semibold'
                 : 'bg-cyan-500 text-slate-950 font-semibold';
@@ -233,6 +252,13 @@ export const CctvVideoPlayer: React.FC<CctvVideoPlayerProps> = ({
                     )}
                   </div>
 
+                  {/* Visible vehicle sprite inside the detection box */}
+                  <VehicleSprite
+                    label={box.label}
+                    emergencyType={box.emergencyType}
+                    orientation={laneOrientation[box.lane]}
+                  />
+
                   {/* Tracker ID inside box */}
                   <span className="absolute bottom-0 right-0 text-[8px] font-mono text-cyan-200/80 bg-slate-950/70 px-0.5">
                     {box.id}
@@ -258,6 +284,25 @@ export const CctvVideoPlayer: React.FC<CctvVideoPlayerProps> = ({
           <div className="text-emerald-400 font-bold">RTSP: {junction.camera.streamStatus}</div>
           <div className="text-slate-400">{junction.camera.resolution}</div>
         </div>
+
+        {/* Pedestrian Crossing Detection Overlay */}
+        {junction.pedestrian.walkActive ? (
+          <div className="absolute bottom-2.5 right-2.5 bg-emerald-950/85 border border-emerald-500 rounded px-2.5 py-1.5 text-[10px] font-mono text-emerald-200 backdrop-blur pointer-events-none animate-pulse">
+            <div className="flex items-center gap-1.5 font-bold">
+              <PersonStanding className="w-3.5 h-3.5 text-emerald-400" />
+              PEDESTRIAN WALK ACTIVE
+            </div>
+            <div className="text-emerald-300">Crossing window {junction.pedestrian.walkTimerSec}s · All approaches HELD</div>
+          </div>
+        ) : junction.pedestrian.waiting ? (
+          <div className="absolute bottom-2.5 right-2.5 bg-slate-950/85 border border-emerald-700/80 rounded px-2.5 py-1.5 text-[10px] font-mono text-emerald-300 backdrop-blur pointer-events-none">
+            <div className="flex items-center gap-1.5 font-bold">
+              <PersonStanding className="w-3.5 h-3.5 text-emerald-400" />
+              PEDESTRIANS WAITING
+            </div>
+            <div className="text-slate-400">Walk served at next phase boundary</div>
+          </div>
+        ) : null}
       </div>
 
       {/* Operator Detection Controls Bar */}

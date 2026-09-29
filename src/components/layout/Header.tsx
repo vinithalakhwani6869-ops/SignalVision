@@ -48,6 +48,8 @@ export const Header: React.FC<HeaderProps> = ({
     map: 'City Network GIS · Dynamic Congestion Topography',
     analytics: 'Impact Analytics · 2026 Diurnal Wait-Time Benchmarks',
     settings: 'Hardware Node Infrastructure · Fail-Safe Interlocks',
+    privacy: 'SignalVision · Privacy Policy',
+    terms: 'SignalVision · Terms & Conditions',
   };
 
   return (

@@ -6,6 +6,7 @@ import { LiveJunctionView } from './components/live/LiveJunctionView';
 import { CityMapFullView } from './components/map/CityMapFullView';
 import { AnalyticsView } from './components/analytics/AnalyticsView';
 import { SettingsView } from './components/settings/SettingsView';
+import { LegalPage } from './components/legal/LegalPage';
 import { useTrafficSimulation } from './hooks/useTrafficSimulation';
 import { X, Check, Bell, AlertTriangle } from 'lucide-react';
 
@@ -24,8 +25,10 @@ export default function App() {
     isPaused,
     setIsPaused,
     emergencyActive,
+    activeEmergencyTypes,
     triggerTrafficSurge,
     triggerEmergencyPreemption,
+    triggerPedestrianCall,
     toggleFailSafe,
     updateJunctionConfig,
     acknowledgeAlert,
@@ -103,6 +106,8 @@ export default function App() {
               onSelectJunction={setSelectedJunctionId}
               onTriggerSurge={triggerTrafficSurge}
               onTriggerEmergency={triggerEmergencyPreemption}
+              onTriggerPedestrian={triggerPedestrianCall}
+              emergencyTypes={activeEmergencyTypes}
               emergencyActive={emergencyActive}
               globalFailSafe={globalFailSafe}
             />
@@ -134,6 +139,14 @@ export default function App() {
               globalFailSafe={globalFailSafe}
               onToggleFailSafe={toggleFailSafe}
             />
+          )}
+
+          {currentScreen === 'privacy' && (
+            <LegalPage kind="privacy" onBack={() => setCurrentScreen('overview')} />
+          )}
+
+          {currentScreen === 'terms' && (
+            <LegalPage kind="terms" onBack={() => setCurrentScreen('overview')} />
           )}
         </main>
       </div>

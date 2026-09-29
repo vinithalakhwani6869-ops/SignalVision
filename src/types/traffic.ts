@@ -4,7 +4,15 @@ export type JunctionZone = 'CBD Central' | 'Tech Corridor' | 'North Ring' | 'Air
 
 export type CongestionLevel = 'normal' | 'moderate' | 'critical';
 
+export type EmergencyType = 'AMBULANCE' | 'FIRE' | 'OTHER';
+
 export type SystemMode = 'ADAPTIVE_AI' | 'FIXED_FALLBACK' | 'MANUAL_OVERRIDE' | 'EMERGENCY_PRIORITY';
+
+export interface PedestrianState {
+  waiting: boolean;
+  walkActive: boolean;
+  walkTimerSec: number;
+}
 
 export interface VehicleBreakdown {
   cars: number;
@@ -30,7 +38,7 @@ export interface LaneData {
 
 export interface BoundingBox {
   id: string;
-  label: 'car' | 'auto' | 'bus' | 'motorcycle' | 'truck' | 'ambulance';
+  label: 'car' | 'auto' | 'bus' | 'motorcycle' | 'truck' | 'ambulance' | 'fire truck' | 'police';
   confidence: number;
   x: number; // percentage 0-100
   y: number; // percentage 0-100
@@ -39,6 +47,7 @@ export interface BoundingBox {
   lane: 'A' | 'B' | 'C' | 'D';
   speedKmph: number;
   isEmergency?: boolean;
+  emergencyType?: EmergencyType;
 }
 
 export interface CameraFeedConfig {
@@ -99,6 +108,7 @@ export interface Junction {
   activeLaneIndex: number; // 0 = A, 1 = B, 2 = C, 3 = D
   currentPhaseTimer: number;
   lanes: LaneData[];
+  pedestrian: PedestrianState;
   camera: CameraFeedConfig;
   config: JunctionConfig;
   trendSparkline: number[];

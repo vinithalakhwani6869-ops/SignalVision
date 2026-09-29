@@ -76,7 +76,7 @@ export const CountdownRing: React.FC<CountdownRingProps> = ({
       {/* Centered Number Counter */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`text-xl font-bold font-mono tabular-nums leading-none tracking-tight ${colorConfig.text}`}>
-          {currentSec}s
+          {Math.max(0, Math.round(currentSec))}s
         </span>
         <span className="text-[9px] uppercase tracking-wider text-slate-400 font-medium mt-0.5">
           {state}

@@ -11,9 +11,11 @@ import {
   Zap,
   Activity,
   Layers,
+  ScrollText,
+  ShieldCheck,
 } from 'lucide-react';
 
-export type ScreenId = 'overview' | 'live' | 'map' | 'analytics' | 'settings';
+export type ScreenId = 'overview' | 'live' | 'map' | 'analytics' | 'settings' | 'privacy' | 'terms';
 
 interface SidebarProps {
   currentScreen: ScreenId;
@@ -183,6 +185,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-slate-400">Hardware Fleet</span>
             <span className="font-mono text-emerald-400">24/24 Online</span>
           </div>
+        </div>
+
+        {/* Legal Footer Links */}
+        <div className="p-3 border-t border-slate-800 flex items-center gap-1">
+          <button
+            onClick={() => handleSelectScreen('privacy')}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-slate-400 hover:text-cyan-300 transition-colors"
+          >
+            <ShieldCheck className="w-3 h-3" />
+            Privacy
+          </button>
+          <span className="text-slate-700">·</span>
+          <button
+            onClick={() => handleSelectScreen('terms')}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-slate-400 hover:text-cyan-300 transition-colors"
+          >
+            <ScrollText className="w-3 h-3" />
+            Terms
+          </button>
         </div>
       </aside>
     </>

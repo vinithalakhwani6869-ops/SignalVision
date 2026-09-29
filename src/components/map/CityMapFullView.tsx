@@ -377,7 +377,7 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-slate-200">{l.vehicleCount} veh</span>
-                    <span className="text-slate-400">({l.queueLengthMeters}m)</span>
+                    <span className="text-slate-400">({Math.round(l.queueLengthMeters)}m)</span>
                     <span
                       className={`text-[10px] font-bold ${
                         l.signalState === 'GREEN'
