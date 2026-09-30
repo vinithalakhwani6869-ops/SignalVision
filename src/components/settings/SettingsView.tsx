@@ -148,7 +148,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="flex justify-between">
                 <span className="text-slate-400">Current Mode:</span>
                 <span className="font-mono text-emerald-400 font-semibold">
-                  {globalFailSafe ? 'Fixed 45s Fallback' : currentJunction.config.mode}
+                  {globalFailSafe ? 'Fixed 60s Fallback' : currentJunction.config.mode}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -376,7 +376,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             <p className="text-xs text-slate-300 leading-relaxed">
               In accordance with municipal traffic safety standards, operators can instantly
-              command all local controllers to fall back to hardcoded, static 45-second fixed
+              command all local controllers to fall back to hardcoded, static 60-second fixed
               timing cycles, isolating the signal heads from AI inference.
             </p>
 

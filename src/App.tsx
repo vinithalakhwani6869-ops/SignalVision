@@ -7,13 +7,32 @@ import { CityMapFullView } from './components/map/CityMapFullView';
 import { AnalyticsView } from './components/analytics/AnalyticsView';
 import { SettingsView } from './components/settings/SettingsView';
 import { LegalPage } from './components/legal/LegalPage';
+import { TrajectoryNetworkView } from './components/trajectory/TrajectoryNetworkView';
 import { useTrafficSimulation } from './hooks/useTrafficSimulation';
+import { useTrajectorySimulation } from './hooks/useTrajectorySimulation';
+import { TrackedVehicleRoute } from './types/traffic';
 import { X, Check, Bell, AlertTriangle } from 'lucide-react';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>('overview');
   const [isAlertsDrawerOpen, setIsAlertsDrawerOpen] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+
+  const {
+    simulation,
+    sightings,
+    hotspots,
+    analytics: trajectoryAnalytics,
+    comparison,
+    start: startTrajectory,
+    pause: pauseTrajectory,
+    setSpeedMultiplier,
+    toggleRushHour,
+    trackVehicle,
+  } = useTrajectorySimulation();
+
+  const [signalVisionEnabled, setSignalVisionEnabled] = useState<boolean>(true);
+  const [trackedRoute, setTrackedRoute] = useState<TrackedVehicleRoute | null>(null);
 
   const {
     junctions,
@@ -33,7 +52,7 @@ export default function App() {
     updateJunctionConfig,
     acknowledgeAlert,
     dismissAlert,
-  } = useTrafficSimulation();
+  } = useTrafficSimulation(signalVisionEnabled ? hotspots : []);
 
   const unreadAlertsCount = alerts.filter((a) => !a.acknowledged).length;
 
@@ -96,6 +115,7 @@ export default function App() {
               onAcknowledgeAlert={acknowledgeAlert}
               onDismissAlert={dismissAlert}
               globalFailSafe={globalFailSafe}
+              hotspots={hotspots}
             />
           )}
 
@@ -120,6 +140,28 @@ export default function App() {
               onSelectJunction={setSelectedJunctionId}
               onNavigateToLive={handleNavigateToLive}
               onNavigateToSettings={handleNavigateToSettings}
+              hotspots={hotspots}
+              trackedRoute={trackedRoute}
+              onTrack={trackVehicle}
+              onTrackedRouteChange={setTrackedRoute}
+            />
+          )}
+
+          {currentScreen === 'network' && (
+            <TrajectoryNetworkView
+              junctions={junctions}
+              simulation={simulation}
+              onStart={startTrajectory}
+              onPause={pauseTrajectory}
+              onSpeedChange={setSpeedMultiplier}
+              onToggleRushHour={toggleRushHour}
+              analytics={trajectoryAnalytics}
+              hotspots={hotspots}
+              sightings={sightings}
+              comparison={comparison}
+              signalVisionEnabled={signalVisionEnabled}
+              onToggleSignalVision={() => setSignalVisionEnabled((enabled) => !enabled)}
+              onNavigateToMap={handleNavigateToMap}
             />
           )}
 

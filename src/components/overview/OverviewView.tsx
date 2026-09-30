@@ -1,5 +1,5 @@
 import React from 'react';
-import { Junction, TrafficAlert } from '../../types/traffic';
+import { Junction, TrafficAlert, JunctionHotspot } from '../../types/traffic';
 import { CongestionMapMini } from './CongestionMapMini';
 import { TopCongestedList } from './TopCongestedList';
 import { AlertsFeed } from './AlertsFeed';
@@ -13,6 +13,7 @@ import {
   Activity,
   ArrowRight,
   ShieldCheck,
+  Radar,
 } from 'lucide-react';
 
 interface OverviewViewProps {
@@ -25,6 +26,7 @@ interface OverviewViewProps {
   onAcknowledgeAlert: (id: string) => void;
   onDismissAlert: (id: string) => void;
   globalFailSafe: boolean;
+  hotspots?: JunctionHotspot[];
 }
 
 export const OverviewView: React.FC<OverviewViewProps> = ({
@@ -37,6 +39,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   onAcknowledgeAlert,
   onDismissAlert,
   globalFailSafe,
+  hotspots = [],
 }) => {
   // Aggregate KPI computations
   const totalMonitored = junctions.length;
@@ -46,6 +49,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const activeAlertsCount = alerts.filter((a) => !a.acknowledged).length;
   const criticalCount = junctions.filter((j) => j.congestionLevel === 'critical').length;
   const totalVehicles = junctions.reduce((sum, j) => sum + j.totalVehicleCount, 0);
+  const flaggedCount = hotspots.filter((h) => h.isFlagged).length;
 
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
@@ -55,11 +59,27 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="flex items-start sm:items-center gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
             <span>
-              <strong>FAIL-SAFE ACTIVE:</strong> Citywide traffic controllers have reverted to fixed 45s cycle timers. Real-time YOLOv8 dynamic allocation is suspended.
+              <strong>FAIL-SAFE ACTIVE:</strong> Citywide traffic controllers have reverted to fixed 60s cycle timers. Real-time YOLOv8 dynamic allocation is suspended.
             </span>
           </div>
           <span className="font-mono text-amber-300 font-bold uppercase tracking-wider shrink-0">
             FIXED TABLE OVERRIDE
+          </span>
+        </div>
+      )}
+
+      {/* FIND→FIX status banner */}
+      {flaggedCount > 0 && (
+        <div className="bg-cyan-950/40 border border-cyan-800 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-cyan-200 text-xs">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <Radar className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5 sm:mt-0" />
+            <span>
+              <strong>FIND → FIX ACTIVE:</strong> Trajectory tracking flagged <strong className="text-white">{flaggedCount} junction(s)</strong>.{' '}
+              SignalVision adaptive control is engaged there; all other junctions run fixed 30s timers.
+            </span>
+          </div>
+          <span className="font-mono text-cyan-300 font-bold uppercase tracking-wider shrink-0">
+            SIGNALVISION ACTIVE
           </span>
         </div>
       )}
@@ -157,7 +177,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
       {/* Bottom Split Section: Top Congested Junctions & Live Incidents Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <TopCongestedList junctions={junctions} onViewLive={onNavigateToLive} />
+        <TopCongestedList junctions={junctions} onViewLive={onNavigateToLive} hotspots={hotspots} />
         <AlertsFeed
           alerts={alerts}
           onAcknowledge={onAcknowledgeAlert}

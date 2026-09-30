@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Junction } from '../../types/traffic';
 import { WAIT_TIME_DATA_BY_RANGE } from '../../data/mockTrafficData';
+import { SimulationComparison, TrajectoryAnalytics } from '../../types/traffic';
+import { NetworkAnalyticsPanel } from '../trajectory/NetworkAnalyticsPanel';
+import { BeforeAfterComparison } from '../trajectory/BeforeAfterComparison';
 import {
   TrendingDown,
   Clock,
@@ -18,9 +21,11 @@ import {
 interface AnalyticsViewProps {
   junctions: Junction[];
   onNavigateToLive: (id: string) => void;
+  trajectoryAnalytics?: TrajectoryAnalytics;
+  comparison?: SimulationComparison;
 }
 
-export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavigateToLive }) => {
+export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavigateToLive, trajectoryAnalytics, comparison }) => {
   const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d'>('today');
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
   const [pinnedHour, setPinnedHour] = useState<number | null>(null);
@@ -334,10 +339,13 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ junctions, onNavig
 
           <div className="p-3 bg-slate-950 rounded border border-slate-800 text-[11px] text-slate-400">
             <span className="text-cyan-400 font-bold font-mono">Mechanism: </span>
-            Fixed signals waste up to 45s on empty cross-streets. SignalVision reallocates these unused seconds immediately to congested approaches.
+            Fixed signals waste up to 60s on empty cross-streets. SignalVision reallocates these unused seconds immediately to congested approaches.
           </div>
         </div>
       </div>
+
+      {trajectoryAnalytics && <NetworkAnalyticsPanel analytics={trajectoryAnalytics} />}
+      {comparison && <BeforeAfterComparison comparison={comparison} />}
 
       {/* Per-Junction Comparison Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">

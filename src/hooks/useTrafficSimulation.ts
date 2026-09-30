@@ -1,110 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Junction, TrafficAlert, SystemMode, BoundingBox, EmergencyType } from '../types/traffic';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Junction, TrafficAlert, SystemMode, EmergencyType, JunctionHotspot } from '../types/traffic';
 import { INITIAL_JUNCTIONS, INITIAL_ALERTS } from '../data/mockTrafficData';
 
-// Generates dynamic YOLO bounding boxes based on active lane counts.
-// Detection is simulated: boxes are procedurally derived from lane queues and
-// emergency override state; they are suppressed while a pedestrian walk phase
-// (all approaches held) is being served.
-export function generateBoundingBoxes(junction: Junction, emergencyTypes: EmergencyType[] = []): BoundingBox[] {
-  if (junction.pedestrian.walkActive) {
-    return [];
-  }
+// FIND→FIX: unflagged junctions run this fixed green duration (spec: "fixed 30s
+// timer") while adaptive logic only runs for junctions the trajectory layer flagged.
+const FIND_FIX_FIXED_GREEN_SEC = 30;
 
-  const boxes: BoundingBox[] = [];
-  const laneA = junction.lanes[0];
-  const laneB = junction.lanes[1];
-  const laneC = junction.lanes[2];
-  const laneD = junction.lanes[3];
-
-  // Lane A (Top Left to Center / North approach)
-  const aCount = Math.min(laneA.vehicleCount, 14);
-  for (let i = 0; i < aCount; i++) {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    boxes.push({
-      id: `TRK-A${i + 1}`,
-      label: i % 4 === 0 ? 'bus' : i % 3 === 0 ? 'auto' : 'car',
-      confidence: 0.86 + (i * 0.01) % 0.12,
-      x: 22 + col * 9 + (row * 1.5),
-      y: 18 + row * 8,
-      width: 7.5,
-      height: 6.5,
-      lane: 'A',
-      speedKmph: laneA.signalState === 'GREEN' ? 24 : 0,
-    });
-  }
-
-  // Lane B (Right to Center / East approach) - emergency vehicles appear here
-  // to match the Lane-B green-wave corridor surfaced in the UI.
-  const bCount = Math.min(laneB.vehicleCount, 16);
-  for (let i = 0; i < bCount; i++) {
-    const col = i % 3;
-    const row = Math.floor(i / 3);
-    const emergencyType = i < emergencyTypes.length ? emergencyTypes[i] : undefined;
-    const emergencyLabel =
-      emergencyType === 'FIRE'
-        ? 'fire truck'
-        : emergencyType === 'OTHER'
-        ? 'police'
-        : emergencyType === 'AMBULANCE'
-        ? 'ambulance'
-        : undefined;
-    boxes.push({
-      id: `TRK-B${i + 1}`,
-      label: emergencyLabel || (i % 5 === 0 ? 'truck' : i % 2 === 0 ? 'car' : 'motorcycle'),
-      confidence: emergencyType ? 0.99 : 0.88 + (i * 0.01) % 0.1,
-      x: 58 + col * 9,
-      y: 35 + row * 9,
-      width: emergencyType ? 10 : i % 5 === 0 ? 11 : 7,
-      height: emergencyType ? 9 : 7,
-      lane: 'B',
-      speedKmph: laneB.signalState === 'GREEN' ? 26 : 0,
-      isEmergency: !!emergencyType,
-      emergencyType,
-    });
-  }
-
-  // Lane C (Bottom approach / Southbound)
-  const cCount = Math.min(laneC.vehicleCount, 12);
-  for (let i = 0; i < cCount; i++) {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    boxes.push({
-      id: `TRK-C${i + 1}`,
-      label: i % 3 === 0 ? 'auto' : 'car',
-      confidence: 0.87 + (i * 0.015) % 0.1,
-      x: 36 + col * 10,
-      y: 62 + row * 6.5,
-      width: 8,
-      height: 7,
-      lane: 'C',
-      speedKmph: laneC.signalState === 'GREEN' ? 20 : 0,
-    });
-  }
-
-  // Lane D (Left / West approach)
-  const dCount = Math.min(laneD.vehicleCount, 10);
-  for (let i = 0; i < dCount; i++) {
-    const row = Math.floor(i / 2);
-    const col = i % 2;
-    boxes.push({
-      id: `TRK-D${i + 1}`,
-      label: i % 2 === 0 ? 'motorcycle' : 'car',
-      confidence: 0.89 + (i * 0.01) % 0.09,
-      x: 8 + col * 8,
-      y: 42 + row * 8,
-      width: 6.5,
-      height: 6,
-      lane: 'D',
-      speedKmph: laneD.signalState === 'GREEN' ? 28 : 0,
-    });
-  }
-
-  return boxes;
-}
-
-export function useTrafficSimulation() {
+export function useTrafficSimulation(hotspots: JunctionHotspot[] = []) {
   const [junctions, setJunctions] = useState<Junction[]>(INITIAL_JUNCTIONS);
   const [selectedJunctionId, setSelectedJunctionId] = useState<string>('J-14');
   const [alerts, setAlerts] = useState<TrafficAlert[]>(INITIAL_ALERTS);
@@ -114,6 +16,20 @@ export function useTrafficSimulation() {
   const emergencyReleaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const emergencyActive = activeEmergencyTypes.length > 0;
+  const flaggedJunctionIds = useMemo(
+    () => new Set(hotspots.filter((hotspot) => hotspot.isFlagged).map((hotspot) => hotspot.junctionId)),
+    [hotspots]
+  );
+
+  // FIND flags are read through a ref so the trajectory layer never tears down
+  // or recreates the 1-second traffic loop. The trajectory sim produces a new
+  // `hotspots` array identity on every tick, and if that identity were a dep of
+  // the loop effect its interval would be cleared+recreated each second — which
+  // starves the lane-timer tick and freezes the live junction view.
+  const flaggedJunctionIdsRef = useRef(flaggedJunctionIds);
+  useEffect(() => {
+    flaggedJunctionIdsRef.current = flaggedJunctionIds;
+  }, [flaggedJunctionIds]);
 
   const selectedJunction = junctions.find((j) => j.id === selectedJunctionId) || junctions[0];
 
@@ -156,12 +72,30 @@ export function useTrafficSimulation() {
           let activeIdx = j.activeLaneIndex;
           let pedestrian = { ...j.pedestrian };
 
+          // Walk countdown runs concurrently with the parallel lane green and
+          // is decremented independently of the lane's own phase timer.
+          if (pedestrian.walkActive) {
+            const nextWalkSec = Math.max(0, pedestrian.walkTimerSec - 1);
+            pedestrian =
+              nextWalkSec <= 0
+                ? { walkActive: false, waiting: false, walkTimerSec: 0 }
+                : { ...pedestrian, walkTimerSec: nextWalkSec };
+          }
+
           const activeLane = updatedLanes[activeIdx];
 
           // Advance to the next lane's green (density-based or fixed fallback)
           const startNextLaneGreen = () => {
-            // Determine next lane: highest demand in Adaptive mode, round-robin in Fixed mode
-            if (j.config.mode === 'ADAPTIVE_AI' && !globalFailSafe) {
+            // Priority order is immutable: emergency preemption, manual fail-safe,
+            // then junction operating mode. FIND→FIX flags ONLY decide the
+            // green-time MODE (adaptive split vs fixed 30s) — they never pick the
+            // lane. WHICH lane gets green always comes from the lane-density
+            // comparison while the adaptive engine is running.
+            const emergencyOverride = j.config.emergencyPreemptionActive || j.config.mode === 'EMERGENCY_PRIORITY';
+            const inFailSafe = j.config.mode === 'FIXED_FALLBACK' || globalFailSafe;
+            const adaptiveModeActive = !emergencyOverride && !inFailSafe && j.config.mode === 'ADAPTIVE_AI';
+
+            if (adaptiveModeActive) {
               // Find next non-cleared lane with highest vehicle queue
               let nextIdx = (activeIdx + 1) % 4;
               let maxVeh = -1;
@@ -176,10 +110,13 @@ export function useTrafficSimulation() {
               activeIdx = (activeIdx + 1) % 4;
             }
 
-            const nextLaneGreenTime =
-              j.config.mode === 'FIXED_FALLBACK' || globalFailSafe
-                ? updatedLanes[activeIdx].fixedTimerBaselineSec
-                : updatedLanes[activeIdx].allocatedGreenSec;
+            const nextLaneGreenTime = inFailSafe
+              ? updatedLanes[activeIdx].fixedTimerBaselineSec
+              : emergencyOverride
+              ? updatedLanes[activeIdx].allocatedGreenSec
+              : adaptiveModeActive && flaggedJunctionIdsRef.current.has(j.id)
+              ? updatedLanes[activeIdx].allocatedGreenSec
+              : FIND_FIX_FIXED_GREEN_SEC;
 
             updatedLanes[activeIdx] = {
               ...updatedLanes[activeIdx],
@@ -189,12 +126,13 @@ export function useTrafficSimulation() {
             currentTimer = nextLaneGreenTime;
           };
 
-          // Timer expired for active lane / walk phase
+          // Timer expired for the active lane / concurrent walk phase
           if (currentTimer <= 0) {
             if (pedestrian.walkActive) {
-              // Pedestrian walk phase finished: clear crossing state and resume vehicle service
-              pedestrian = { ...pedestrian, walkActive: false, waiting: false, walkTimerSec: 0 };
-              startNextLaneGreen();
+              // Still serving the walk: hold this lane's green so pedestrians
+              // finish crossing before the parallel phase is cleared.
+              updatedLanes[activeIdx] = { ...activeLane, signalState: 'GREEN', currentTimerSec: 1 };
+              currentTimer = 1;
             } else if (activeLane.signalState === 'GREEN') {
               // Transition to Amber clearance
               updatedLanes[activeIdx] = {
@@ -212,32 +150,28 @@ export function useTrafficSimulation() {
               };
 
               if (pedestrian.waiting && !j.config.emergencyPreemptionActive) {
-                // Serve waiting pedestrians: hold every approach at RED during the walk phase
-                updatedLanes = updatedLanes.map((l) => ({
-                  ...l,
-                  signalState: 'RED',
-                  currentTimerSec: 0,
-                }));
+                // Standard concurrent/parallel pedestrian phase (US MUTCD §4E):
+                // the walk is served together with the next non-conflicting
+                // lane's green instead of an all-red scramble. N/S crosswalks
+                // walk parallel to E-W traffic (lanes B/D); E/W crosswalks walk
+                // parallel to N-S traffic (lanes A/C).
                 pedestrian = {
                   ...pedestrian,
+                  waiting: false,
                   walkActive: true,
                   walkTimerSec: j.config.pedestrianWalkSec,
                 };
-                currentTimer = j.config.pedestrianWalkSec;
+                startNextLaneGreen();
               } else {
                 startNextLaneGreen();
               }
             }
           } else {
-            // Decrement active lane timer (walk phase countdown during pedestrian crossing)
-            if (pedestrian.walkActive) {
-              pedestrian = { ...pedestrian, walkTimerSec: currentTimer };
-            } else {
-              updatedLanes[activeIdx] = {
-                ...activeLane,
-                currentTimerSec: currentTimer,
-              };
-            }
+            // Decrement the active lane's phase timer (walk timer handled above)
+            updatedLanes[activeIdx] = {
+              ...activeLane,
+              currentTimerSec: currentTimer,
+            };
 
             // Small live vehicle flow simulation:
             // Active green lane discharges vehicles (~1-2 every 3s)
@@ -265,8 +199,10 @@ export function useTrafficSimulation() {
             });
           }
 
-          // Recalculate adaptive values if in AI mode
-          if (j.config.mode === 'ADAPTIVE_AI' && !globalFailSafe) {
+          // Recalculate adaptive values whenever the adaptive engine is running
+          // (FIND flags only choose the green-time mode, never the density math)
+          const emergencyOverride = j.config.emergencyPreemptionActive || j.config.mode === 'EMERGENCY_PRIORITY';
+          if (!emergencyOverride && !globalFailSafe) {
             updatedLanes = recalculateAdaptiveGreens(updatedLanes, j.config);
           }
 
@@ -306,7 +242,9 @@ export function useTrafficSimulation() {
               }
             : l
         );
-        const recalced = recalculateAdaptiveGreens(newLanes, j.config);
+        const recalced = !globalFailSafe
+          ? recalculateAdaptiveGreens(newLanes, j.config)
+          : newLanes;
         return {
           ...j,
           lanes: recalced,
@@ -488,7 +426,7 @@ export function useTrafficSimulation() {
       severity: nextState ? 'warning' : 'info',
       title: nextState ? 'Fail-Safe Activated: Reverted to Fixed Timers' : 'Adaptive AI Mode Restored',
       description: nextState
-        ? 'Manual operator fail-safe interlock triggered. Fixed 45-50s timing tables applied across all intersections.'
+        ? 'Manual operator fail-safe interlock triggered. Fixed 60s timing tables applied across all intersections.'
         : 'YOLOv8 density control re-engaged. Dynamic green split optimization active.',
       acknowledged: false,
     };
@@ -501,7 +439,9 @@ export function useTrafficSimulation() {
       prev.map((j) => {
         if (j.id !== junctionId) return j;
         const newConfig = { ...j.config, ...partialConfig };
-        const recalcedLanes = recalculateAdaptiveGreens(j.lanes, newConfig);
+        const recalcedLanes = !globalFailSafe
+          ? recalculateAdaptiveGreens(j.lanes, newConfig)
+          : j.lanes;
         return {
           ...j,
           config: newConfig,
@@ -529,6 +469,9 @@ export function useTrafficSimulation() {
     setSelectedJunctionId,
     alerts,
     globalFailSafe,
+    hotspotFlags: hotspots,
+    isSignalVisionActive: (junctionId: string) =>
+      !globalFailSafe && flaggedJunctionIds.has(junctionId),
     isPaused,
     setIsPaused,
     emergencyActive,

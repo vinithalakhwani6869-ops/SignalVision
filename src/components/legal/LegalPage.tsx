@@ -49,8 +49,8 @@ const termsSections = [
     body: 'The interface, code, and concepts presented here are the intellectual property of Team KYZEN unless otherwise stated. Third-party frameworks and assets remain subject to their own licenses.',
   },
   {
-    title: 'No warranty & liability',
-    body: 'This prototype is provided "as is" without warranty of any kind. The team is not liable for any loss or decision made in reliance on the information displayed. Always validate against certified traffic-control hardware and regulations.',
+    title: 'Prototype Disclaimer',
+    body: 'This prototype is intended for demonstration and evaluation only. Its outputs should be validated against applicable traffic regulations, certified traffic-control infrastructure, and real-world conditions before deployment.',
   },
   {
     title: 'Contact',

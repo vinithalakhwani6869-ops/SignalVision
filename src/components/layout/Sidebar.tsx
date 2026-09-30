@@ -13,9 +13,10 @@ import {
   Layers,
   ScrollText,
   ShieldCheck,
+  Radar,
 } from 'lucide-react';
 
-export type ScreenId = 'overview' | 'live' | 'map' | 'analytics' | 'settings' | 'privacy' | 'terms';
+export type ScreenId = 'overview' | 'live' | 'map' | 'analytics' | 'settings' | 'network' | 'privacy' | 'terms';
 
 interface SidebarProps {
   currentScreen: ScreenId;
@@ -46,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'overview', label: 'Overview Dashboard', icon: LayoutDashboard },
     { id: 'live', label: 'Live Junction View', icon: Video },
     { id: 'map', label: 'City Congestion Map', icon: Map },
+    { id: 'network', label: 'Trajectory & FIND', icon: Radar },
     { id: 'analytics', label: 'Analytics & Impact', icon: BarChart3 },
     { id: 'settings', label: 'System & Fail-Safe', icon: Sliders },
   ];
@@ -149,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Fail-Safe Toggle */}
             <button
               onClick={onToggleFailSafe}
-              title="Operator override: switch all controllers between adaptive AI and fixed 45s timers. This manual interlock is the only thing that changes the engine status."
+              title="Operator override: switch all controllers between adaptive AI and fixed 60s timers. This manual interlock is the only thing that changes the engine status."
               className={`w-full flex items-center justify-between px-3 py-2 rounded border text-xs font-medium transition-all ${
                 globalFailSafe
                   ? 'bg-amber-950/80 border-amber-500 text-amber-200'
@@ -175,12 +177,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="font-mono text-slate-200 flex items-center gap-1.5 cursor-help"
               title={
                 globalFailSafe
-                  ? 'Fixed 45s timers active — engaged by operator override (manual fail-safe toggle below or Settings › Safety & Watchdog).'
+                  ? 'Fixed 60s timers active — engaged by operator override (manual fail-safe toggle below or Settings › Safety & Watchdog).'
                   : 'YOLOv8 detection + adaptive phase allocation active on all controllers.'
               }
             >
               <span className={`w-1.5 h-1.5 rounded-full ${globalFailSafe ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`} />
-              {globalFailSafe ? 'Fixed 45s Fallback' : 'YOLOv8 Adaptive'}
+              {globalFailSafe ? 'Fixed 60s Fallback' : 'YOLOv8 Adaptive'}
             </span>
           </div>
           <div className="flex items-center justify-between">

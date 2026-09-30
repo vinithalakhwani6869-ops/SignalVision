@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Junction, JunctionZone, CongestionLevel } from '../../types/traffic';
+import { Junction, JunctionZone, CongestionLevel, JunctionHotspot, TrackedVehicleRoute } from '../../types/traffic';
 import { SignalLight } from '../common/SignalLight';
+import { TrackedRouteOverlay } from './TrackedRouteOverlay';
+import { VehicleTracker } from '../trajectory/VehicleTracker';
+import { TRAJECTORY_JUNCTION_IDS } from '../../data/cityNetwork';
 import {
   Search,
   Filter,
@@ -15,6 +18,9 @@ import {
   Shield,
   Radio,
   Sliders,
+  Zap,
+  Route,
+  X,
 } from 'lucide-react';
 
 interface CityMapFullViewProps {
@@ -23,6 +29,10 @@ interface CityMapFullViewProps {
   onSelectJunction: (id: string) => void;
   onNavigateToLive: (id: string) => void;
   onNavigateToSettings: () => void;
+  hotspots?: JunctionHotspot[];
+  trackedRoute?: TrackedVehicleRoute | null;
+  onTrack?: (plate: string) => Promise<TrackedVehicleRoute | null>;
+  onTrackedRouteChange?: (route: TrackedVehicleRoute | null) => void;
 }
 
 export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
@@ -31,6 +41,10 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
   onSelectJunction,
   onNavigateToLive,
   onNavigateToSettings,
+  hotspots = [],
+  trackedRoute = null,
+  onTrack,
+  onTrackedRouteChange,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedZone, setSelectedZone] = useState<string>('ALL');
@@ -39,6 +53,10 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const activeJunction = junctions.find((j) => j.id === selectedJunctionId) || junctions[0];
+
+  const hotspotById = new Map(hotspots.map((h) => [h.junctionId, h]));
+  const flaggedActive = hotspotById.get(activeJunction.id)?.isFlagged ?? false;
+  const inNetworkScope = (TRAJECTORY_JUNCTION_IDS as readonly string[]).includes(activeJunction.id);
 
   const zones: (JunctionZone | 'ALL')[] = [
     'ALL',
@@ -87,6 +105,31 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
               className="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-cyan-500 backdrop-blur shadow-lg"
             />
           </div>
+
+          {/* FIND layer: vehicle tracker + active route chip live inside the
+              control bar (solid backgrounds) so they never float over the
+              map's junction markers / road labels at any screen size. */}
+          {(onTrack || trackedRoute) && (
+            <div className="flex items-center gap-2 pointer-events-auto flex-wrap">
+              {onTrack && onTrackedRouteChange && (
+                <VehicleTracker onTrack={onTrack} route={trackedRoute} onRouteChange={onTrackedRouteChange} />
+              )}
+              {trackedRoute && (
+                <div className="flex items-center gap-2 bg-slate-900 border border-cyan-700 rounded-lg px-2.5 py-1.5 text-[10px] font-mono text-cyan-300 shadow-lg">
+                  <Route className="w-3 h-3" />
+                  <span>
+                    Tracking {trackedRoute.plateHash.slice(0, 10)}… · {trackedRoute.stops.length} cameras ·{' '}
+                    {trackedRoute.segmentTimes.length} segments
+                  </span>
+                  {onTrackedRouteChange && (
+                    <button onClick={() => onTrackedRouteChange(null)} className="text-slate-400 hover:text-white" title="Clear route">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Filter Chips & Zoom Tools */}
           <div className="flex items-center gap-2 pointer-events-auto flex-wrap">
@@ -212,6 +255,7 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
                 </g>
               );
             })}
+            {trackedRoute && <TrackedRouteOverlay stops={trackedRoute.stops} junctions={junctions} />}
           </svg>
 
           {/* Interactive Junction Pins */}
@@ -226,12 +270,21 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
               const isSelected = j.id === activeJunction.id;
               const isCritical = j.congestionLevel === 'critical';
               const isModerate = j.congestionLevel === 'moderate';
+              const flagged = hotspotById.get(j.id)?.isFlagged ?? false;
+              const flagStatus = hotspotById.get(j.id)?.status;
 
-              const pinColor = isCritical
-                ? 'bg-rose-500 shadow-[0_0_18px_rgba(244,63,94,0.95)]'
-                : isModerate
-                ? 'bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.9)]'
-                : 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]';
+              // FIND→FIX: hotspot-flagged junctions override the pin colour
+              // (amber = moderate, rose = critical) regardless of local queue level.
+              const pinColor =
+                flagStatus === 'critical'
+                  ? 'bg-rose-500 shadow-[0_0_18px_rgba(244,63,94,0.95)]'
+                  : flagStatus === 'moderate'
+                  ? 'bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.9)]'
+                  : isCritical
+                  ? 'bg-rose-500 shadow-[0_0_18px_rgba(244,63,94,0.95)]'
+                  : isModerate
+                  ? 'bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.9)]'
+                  : 'bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]';
 
               return (
                 <div
@@ -257,6 +310,12 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
                   <div className="absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900/95 border border-slate-700 text-slate-200 shadow-xl pointer-events-none flex items-center gap-1.5">
                     <span>{j.name.split('/')[0].trim()}</span>
                     <span className="text-cyan-400 font-bold">{j.congestionScore}%</span>
+                    {flagged && (
+                      <span className="flex items-center gap-0.5 text-cyan-300 font-bold bg-cyan-950/90 border border-cyan-700/80 rounded px-1">
+                        <Zap className="w-2.5 h-2.5" />
+                        SignalVision active
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -308,6 +367,24 @@ export const CityMapFullView: React.FC<CityMapFullViewProps> = ({
 
         {/* Panel Body */}
         <div className="p-4 space-y-4 text-xs">
+          {/* FIND→FIX status for this junction */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-slate-400">FIND→FIX status</span>
+            {flaggedActive ? (
+              <span className="flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700 uppercase font-bold">
+                <Zap className="w-3 h-3" /> SignalVision active
+              </span>
+            ) : inNetworkScope ? (
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 uppercase font-bold">
+                Fixed 30s timer
+              </span>
+            ) : (
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-800 uppercase font-bold">
+                Outside FIND scope
+              </span>
+            )}
+          </div>
+
           {/* Camera Preview Thumbnail */}
           <div className="relative rounded-lg overflow-hidden border border-slate-800 group">
             <img

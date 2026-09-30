@@ -189,7 +189,7 @@ export const LiveJunctionView: React.FC<LiveJunctionViewProps> = ({
           <button
             onClick={onTriggerPedestrian}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium border border-slate-700 bg-slate-800 hover:bg-emerald-950/40 hover:border-emerald-600 text-emerald-300 transition-all"
-            title="Simulate pedestrian push-button demand — all approaches held RED for the walk phase at the next signal boundary"
+            title="Simulate pedestrian push-button demand — served as a standard concurrent walk at the next signal boundary, parallel to the compatible green phase (MUTCD §4E)"
           >
             <PersonStanding className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span className="truncate">Pedestrian Call</span>
@@ -226,10 +226,10 @@ export const LiveJunctionView: React.FC<LiveJunctionViewProps> = ({
           <div className="flex items-start sm:items-center gap-2">
             <PersonStanding className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5 sm:mt-0" />
             <span>
-              <strong>PEDESTRIAN WALK PHASE ACTIVE:</strong> Push-button demand served. All vehicle approaches held at RED. Crossing window {selectedJunction.pedestrian.walkTimerSec}s.
+              <strong>PEDESTRIAN WALK PHASE ACTIVE:</strong> Push-button demand served as a standard concurrent walk. Crossings clear in parallel with the compatible green phase — vehicles on the parallel approach keep moving. Crossing window {selectedJunction.pedestrian.walkTimerSec}s.
             </span>
           </div>
-          <span className="font-mono text-emerald-400 font-bold shrink-0">ALL APPROACHES HELD</span>
+          <span className="font-mono text-emerald-400 font-bold shrink-0">CONCURRENT WITH PARALLEL GREEN</span>
         </div>
       )}
       {selectedJunction.pedestrian.waiting && !selectedJunction.pedestrian.walkActive && (
@@ -248,6 +248,7 @@ export const LiveJunctionView: React.FC<LiveJunctionViewProps> = ({
           <CctvVideoPlayer
             junction={selectedJunction}
             emergencyTypes={emergencyTypes}
+            onRequestPedestrian={onTriggerPedestrian}
           />
         </div>
 

@@ -24,7 +24,7 @@ export const LaneCard: React.FC<LaneCardProps> = ({
     ? lane.allocatedGreenSec
     : isAmber
     ? 4
-    : 45; // typical red wait
+    : lane.fixedTimerBaselineSec; // static red wait under the fixed-timer program
 
   const borderColor = isGreen
     ? 'border-emerald-500/80 shadow-[0_0_15px_rgba(16,185,129,0.15)] bg-slate-900/95'

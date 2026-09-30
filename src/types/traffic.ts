@@ -114,3 +114,83 @@ export interface Junction {
   trendSparkline: number[];
   lastUpdated: string;
 }
+
+export interface VehicleSighting {
+  plateHash: string;
+  cameraId: string;
+  junctionId: string;
+  lane: LaneData['laneId'];
+  timestamp: number;
+}
+
+export interface RoadSegment {
+  id: string;
+  name: string;
+  fromJunctionId: string;
+  toJunctionId: string;
+  baselineTravelTimeSec: number;
+}
+
+export interface SegmentTravelMetric extends RoadSegment {
+  averageTravelTimeSec: number;
+  sampleCount: number;
+  congestionRatio: number;
+  status: 'normal' | 'moderate' | 'critical';
+}
+
+export interface TrackedRouteStop {
+  junctionId: string;
+  cameraId: string;
+  timestamp: number;
+}
+
+export interface TrackedVehicleRoute {
+  plateHash: string;
+  stops: TrackedRouteStop[];
+  segmentTimes: SegmentTravelMetric[];
+}
+
+export interface JunctionHotspot {
+  junctionId: string;
+  status: 'normal' | 'moderate' | 'critical';
+  averageIncomingTravelTimeSec: number;
+  isFlagged: boolean;
+}
+
+export interface OriginDestinationMetric {
+  originJunctionId: string;
+  destinationJunctionId: string;
+  vehicleCount: number;
+  averageJourneyTimeSec: number;
+}
+
+export interface HourlyTrafficMetric {
+  hour: string;
+  journeys: number;
+  averageTravelTimeSec: number;
+}
+
+export interface TrajectoryAnalytics {
+  averageJourneyTimeSec: number;
+  busiestRoads: SegmentTravelMetric[];
+  bottlenecks: SegmentTravelMetric[];
+  peakHourSeries: HourlyTrafficMetric[];
+  topOriginDestinationPairs: OriginDestinationMetric[];
+}
+
+export interface SimulationComparison {
+  fixedAverageWaitSec: number;
+  signalVisionAverageWaitSec: number;
+  fixedAverageJourneySec: number;
+  signalVisionAverageJourneySec: number;
+  waitImprovementPercent: number;
+  journeyImprovementPercent: number;
+}
+
+export interface TrajectorySimulationState {
+  isRunning: boolean;
+  speedMultiplier: 1 | 2 | 4 | 8;
+  rushHourActive: boolean;
+  simulatedClock: number;
+  sightingCount: number;
+}

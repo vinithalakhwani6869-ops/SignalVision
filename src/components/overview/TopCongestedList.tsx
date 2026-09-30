@@ -1,15 +1,17 @@
 import React from 'react';
-import { Junction } from '../../types/traffic';
-import { Eye, ArrowUpRight, ChevronRight } from 'lucide-react';
+import { Junction, JunctionHotspot } from '../../types/traffic';
+import { Eye, ArrowUpRight, ChevronRight, Zap } from 'lucide-react';
 
 interface TopCongestedListProps {
   junctions: Junction[];
   onViewLive: (junctionId: string) => void;
+  hotspots?: JunctionHotspot[];
 }
 
-export const TopCongestedList: React.FC<TopCongestedListProps> = ({ junctions, onViewLive }) => {
+export const TopCongestedList: React.FC<TopCongestedListProps> = ({ junctions, onViewLive, hotspots = [] }) => {
   // Sort by congestion score descending
   const sortedJunctions = [...junctions].sort((a, b) => b.congestionScore - a.congestionScore);
+  const hotspotById = new Map(hotspots.map((h) => [h.junctionId, h]));
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
@@ -29,6 +31,7 @@ export const TopCongestedList: React.FC<TopCongestedListProps> = ({ junctions, o
         {sortedJunctions.map((j, idx) => {
           const isCritical = j.congestionLevel === 'critical';
           const isModerate = j.congestionLevel === 'moderate';
+          const flagged = hotspotById.get(j.id)?.isFlagged ?? false;
 
           return (
             <div
@@ -47,6 +50,12 @@ export const TopCongestedList: React.FC<TopCongestedListProps> = ({ junctions, o
                       {j.name}
                     </span>
                     <span className="font-mono text-[10px] text-slate-400 shrink-0">{j.id}</span>
+                    {flagged && (
+                      <span className="flex items-center gap-0.5 text-[9px] font-mono font-bold px-1 py-0.5 rounded bg-cyan-950 border border-cyan-700 text-cyan-300 whitespace-nowrap">
+                        <Zap className="w-2.5 h-2.5" />
+                        SignalVision active
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400 mt-0.5">
                     <span>{j.zone}</span>

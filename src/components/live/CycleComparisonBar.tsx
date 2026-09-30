@@ -10,7 +10,7 @@ export const CycleComparisonBar: React.FC<CycleComparisonBarProps> = ({ junction
   const lanes = junction.lanes;
 
   // Calculate totals
-  const totalFixedSec = lanes.reduce((sum, l) => sum + l.fixedTimerBaselineSec, 0); // e.g. 180s
+  const totalFixedSec = lanes.reduce((sum, l) => sum + l.fixedTimerBaselineSec, 0); // e.g. 240s
   const totalAdaptiveSec = lanes.reduce((sum, l) => sum + l.allocatedGreenSec, 0); // dynamic pool e.g. 140-160s
 
   const colors = [
@@ -55,11 +55,13 @@ export const CycleComparisonBar: React.FC<CycleComparisonBarProps> = ({ junction
 
       {/* Comparison Bars */}
       <div className="space-y-3 font-mono text-xs">
-        {/* 1. Traditional Fixed Timer Allocation (Equal static 45s splits) */}
+        {/* 1. Traditional Fixed Timer Allocation (Equal static 60s splits) */}
         <div>
           <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400 mb-1">
-            <span>Traditional Fixed-Time Program (Static 180s cycle)</span>
-            <span className="text-slate-500 hidden sm:inline">45s / 45s / 45s / 45s equal</span>
+            <span>Traditional Fixed-Time Program (Static {totalFixedSec}s cycle)</span>
+            <span className="text-slate-500 hidden sm:inline">
+              {lanes.map((l) => `${l.fixedTimerBaselineSec}s`).join(' / ')} equal
+            </span>
           </div>
 
           <div className="h-7 w-full bg-slate-950 rounded border border-slate-800 flex overflow-hidden">

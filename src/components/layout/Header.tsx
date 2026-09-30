@@ -46,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
     overview: 'Operations Control Center · Citywide Overview',
     live: `Live Junction Node · ${activeJunctionName || 'Koramangala 80ft'}`,
     map: 'City Network GIS · Dynamic Congestion Topography',
+    network: 'City-Wide AI Engine · ANPR Trajectory & Traffic Analytics',
     analytics: 'Impact Analytics · 2026 Diurnal Wait-Time Benchmarks',
     settings: 'Hardware Node Infrastructure · Fail-Safe Interlocks',
     privacy: 'SignalVision · Privacy Policy',
@@ -85,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
             title={
               globalFailSafe
-                ? 'Fail-safe engaged by OPERATOR OVERRIDE (Sidebar › Fail-Safe Mode / Settings › Safety & Watchdog). All local controllers running fixed 45s timers; YOLOv8 adaptive allocation suspended. No automatic condition triggers this state.'
+                ? 'Fail-safe engaged by OPERATOR OVERRIDE (Sidebar › Fail-Safe Mode / Settings › Safety & Watchdog). All local controllers running fixed 60s timers; YOLOv8 adaptive allocation suspended. No automatic condition triggers this state.'
                 : 'Adaptive density control active — no fail-safe engaged. Fallback to fixed timers only occurs via the manual operator override.'
             }
           >
